@@ -501,6 +501,15 @@ typedef struct node {
 } Reserva;
 
 
+
+
+
+
+
+
+
+
+
 void mostraReservas(Reserva *head)
 {
 	while (head != NULL) {
@@ -528,6 +537,7 @@ Reserva* push(Reserva* head, char cV[], Data data, char* cR, int nP)
 Reserva * pop(Reserva * head) 
 {
     Reserva * aux = head->next;
+	free(head->codigoReserva);
     free(head);
     return aux;
 }
@@ -536,11 +546,73 @@ Reserva * pop(Reserva * head)
 void destroy(Reserva * head)
 {
     while(head != NULL) {
-		free(head->codigoReserva);
         head = pop(head);
     }
 }
 
+
+
+
+
+int testaCodigoReserva(char* cR, int errorCode)
+{
+	int i, len, flag = FALSE;
+
+	len = strlen(cR);
+	if (len < 10)
+		flag = TRUE;
+	for (i = 0; i < len; i++)
+		if (!(('A' <= cR[i] && cR[i] <= 'Z') || ('0' <= cR[i] && cR[i] <= '9')))
+			flag = TRUE;
+	return flag? 1:errorCode;
+}
+
+
+int testeVooExiste(char cV[], Data data, int errorCode)
+{
+	return (encontraVoo(cV, data) == -1)? 2:errorCode;
+}
+
+
+int testeReservasDuplicas(char* cR, Reserva* head, int errorCode)
+{
+	Reserva *curr = head;
+
+	while (curr != NULL) {
+		if (!strcmp(cR, curr->codigoReserva))
+			return 3;
+		curr = curr->next;
+	}
+	return errorCode;
+}
+
+
+int testeCapacidadeVoo(Reserva* head, char cV[], Data d, int nP, int errorCode)
+{
+	int numReservas = nP;
+	Reserva *curr = head;
+
+	while (curr != NULL) {
+		numReservas += curr->numPassageiros;
+		curr = curr->next;
+	}
+
+	if (numReservas >= _voos[encontraVoo(cV, d)].capacidade)
+		return 4;
+	return errorCode;
+}
+
+
+int testeData(Data data, int errorCode)
+{
+	return (validaData(data))? errorCode:5;
+}
+
+
+int testeNumPassageiros(int numPassageiros, int errorCode)
+{
+	return (numPassageiros > 0)? errorCode:6;
+}
 
 
 
@@ -602,7 +674,7 @@ void bubbleSortReservas(Reserva* head)
 
 Reserva* r(Reserva* head)
 {
-    int numPassageiros;
+    int numPassageiros, errorCode = 0;
     char c, codigoVoo[MAX_CODIGO_VOO], *codigoReserva;
     Data data;
 	Reserva *curr = (Reserva*) malloc(sizeof(Reserva));
@@ -613,17 +685,66 @@ Reserva* r(Reserva* head)
 	data = leData();
     if ((c = getchar()) == '\n') {
 		
-		bubbleSortReservas(head);
-        for (curr = head; curr != NULL; curr = curr->next) {
-			if (!strcmp(curr->codigoVoo, codigoVoo))
-				printf("%s %d\n", curr->codigoReserva, curr->numPassageiros);
+		errorCode = testeData(data, errorCode);
+		errorCode = testeVooExiste(codigoVoo, data, errorCode);
+
+		switch (errorCode)
+		{
+			case 0:
+				bubbleSortReservas(head);
+				for (curr = head; curr != NULL; curr = curr->next) {
+					if (!strcmp(curr->codigoVoo, codigoVoo))
+						printf("%s %d\n", curr->codigoReserva, 
+								curr->numPassageiros);
+				}
+				break;
+			case 2:
+				printf("%s: flight does not exist\n", codigoVoo);
+				break;
+			case 5:
+				printf("invalid date\n");
+				break;
 		}
     }
     else {
 		codigoReserva = (char*) malloc(sizeof(char) * MAX_LINHA);
         scanf("%s %d", codigoReserva, &numPassageiros);
-		/* if too much memory use realloc here */
-		head = push(head, codigoVoo, data, codigoReserva, numPassageiros);
+
+		codigoReserva = (char*) realloc(codigoReserva, 
+				sizeof(char) * (strlen(codigoReserva) + 1));
+
+		errorCode = testeNumPassageiros(numPassageiros, errorCode);
+		errorCode = testeData(data, errorCode);
+		errorCode = testeCapacidadeVoo(head, codigoVoo, 
+				data, numPassageiros, errorCode);
+		errorCode = testeReservasDuplicas(codigoReserva, head, errorCode);
+		errorCode = testeVooExiste(codigoVoo, data, errorCode);
+		errorCode = testaCodigoReserva(codigoReserva, errorCode);
+
+		switch (errorCode)
+		{
+		case 0:
+			head = push(head, codigoVoo, data, codigoReserva, numPassageiros);
+			break;
+		case 1:
+			printf("invalid reservation code\n");
+			break;
+		case 2:
+			printf("%s: flight does not exist\n", codigoVoo);
+			break;
+		case 3:
+			printf("%s: flight reservation already used\n", codigoReserva);
+			break;
+		case 4:
+			printf("too many reservations\n");
+			break;
+		case 5:
+			printf("invalid date\n");
+			break;
+		case 6:
+			printf("invalid passenger number\n");
+			break;
+		}
     }
 
 	free(curr);
