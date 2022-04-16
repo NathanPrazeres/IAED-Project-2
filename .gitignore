@@ -1,0 +1,6 @@
+
+*.txt
+proj2
+*.out
+*.in
+tests/Makefile
