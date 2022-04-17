@@ -4,3 +4,6 @@ proj2
 *.out
 *.in
 tests/Makefile
+community_tests
+iaed
+*.sh

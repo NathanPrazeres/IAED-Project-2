@@ -133,7 +133,7 @@ void mostraData(Data d) {
 
 
 void mostraHora(Hora h) {
-	printf("%02d:%02d", h.minuto, h.hora);
+	printf("%02d:%02d", h.hora, h.minuto);
 }
 
 
@@ -510,7 +510,7 @@ typedef struct node {
 
 
 
-void mostraReservas(Reserva *head)
+void mostraReservas(Reserva* head)
 {
 	while (head != NULL) {
 		printf("%s %d\n", head->codigoReserva, head->numPassageiros);
@@ -534,7 +534,7 @@ Reserva* push(Reserva* head, char cV[], Data data, char* cR, int nP)
 }
 
 
-Reserva * pop(Reserva * head) 
+Reserva* pop(Reserva* head) 
 {
     Reserva * aux = head->next;
 	free(head->codigoReserva);
@@ -543,7 +543,7 @@ Reserva * pop(Reserva * head)
 }
 
 
-void destroy(Reserva * head)
+void destroy(Reserva* head)
 {
     while(head != NULL) {
         head = pop(head);
@@ -593,7 +593,10 @@ int testeCapacidadeVoo(Reserva* head, char cV[], Data d, int nP, int errorCode)
 	Reserva *curr = head;
 
 	while (curr != NULL) {
-		numReservas += curr->numPassageiros;
+		if (!strcmp(curr->codigoVoo, cV) && 
+				converteDataNum(d) == 
+				converteDataNum(curr->data))
+			numReservas += curr->numPassageiros;
 		curr = curr->next;
 	}
 
@@ -693,7 +696,9 @@ Reserva* r(Reserva* head)
 			case 0:
 				bubbleSortReservas(head);
 				for (curr = head; curr != NULL; curr = curr->next) {
-					if (!strcmp(curr->codigoVoo, codigoVoo))
+					if (!strcmp(curr->codigoVoo, codigoVoo) && 
+							converteDataNum(data) == 
+							converteDataNum(curr->data))
 						printf("%s %d\n", curr->codigoReserva, 
 								curr->numPassageiros);
 				}
@@ -720,7 +725,6 @@ Reserva* r(Reserva* head)
 		errorCode = testeReservasDuplicas(codigoReserva, head, errorCode);
 		errorCode = testeVooExiste(codigoVoo, data, errorCode);
 		errorCode = testaCodigoReserva(codigoReserva, errorCode);
-
 		switch (errorCode)
 		{
 		case 0:
@@ -782,7 +786,8 @@ Reserva* e(Reserva* head)
 			for (j = i; j < _numVoos - 1; j++)
 				_voos[j] = _voos[j + 1];
 			_numVoos--;
-		} 
+			i--;
+		}
 	}
 
 	if (flag)
