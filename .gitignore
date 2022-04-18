@@ -3,7 +3,10 @@
 proj2
 *.out
 *.in
-tests/Makefile
+tests
 community_tests
 iaed
 *.sh
+*.diff
+tests_pub
+joana
