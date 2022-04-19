@@ -10,7 +10,7 @@ extern Voo _voos[];
 /* Reservas */
 
 
-void memoryOverload(Reserva* head)
+void erroMemoria(Reserva* head)
 {
     printf(ERR_MEM);
 	destroy(head);
@@ -19,10 +19,10 @@ void memoryOverload(Reserva* head)
 
 Reserva* pop(Reserva* head) 
 {
-    Reserva * aux = head->next;
+    Reserva *temp = head->next;
 	free(head->codigoReserva);
     free(head);
-    return aux;
+    return temp;
 }
 
 
@@ -36,14 +36,12 @@ void destroy(Reserva* head)
 
 Reserva* push(Reserva* head, char cV[], Data data, char* cR, int nP)
 {
-	int i;
 	Reserva *reserva;
 	
 	if ((reserva = (Reserva*) malloc(sizeof(Reserva))) == NULL)
-		memoryOverload(head);
+		erroMemoria(head);
 
-	for (i = 0; i < MAX_CODIGO_VOO; i++)
-		reserva->codigoVoo[i] = cV[i];
+    strcpy(reserva->codigoVoo, cV);
 	reserva->data = data;
 	reserva->codigoReserva = cR;
 	reserva->numPassageiros = nP;
@@ -54,110 +52,113 @@ Reserva* push(Reserva* head, char cV[], Data data, char* cR, int nP)
 
 int removeVoos(char* codigo, int flag)
 {
-	int i;
+	int i, j = 0;
 
 	for (i = 0; i < _numVoos; i++) {
-		if (!strcmp(_voos[i].id, codigo)) {
+		if (strcmp(_voos[i].id, codigo)) {
+			_voos[j++] = _voos[i];
+		}
+		else {
 			flag = FALSE;
-			for (i = i; i < _numVoos - 1; i++)
-				_voos[i] = _voos[i + 1];
-			_numVoos--;
-			i--;
 		}
 	}
+	_numVoos = j;
+	
 	return flag;
 }
 
 
-int testaCodigoReserva(char* cR, int errorCode)
+int testaCodigoReserva(char* cR, int codigoErro)
 {
-	int i, len, flag = FALSE;
+	int i, len = strlen(cR);
 
-	len = strlen(cR);
 	if (len < 10)
-		flag = TRUE;
-	for (i = 0; i < len; i++)
-		if (!(('A' <= cR[i] && cR[i] <= 'Z') || ('0' <= cR[i] && cR[i] <= '9')))
-			flag = TRUE;
-	return flag? 1:errorCode;
+		return 1;
+    for (i = 0; i < len; i++)
+        if (('A' > cR[i] || cR[i] > 'Z') && ('0' > cR[i] || cR[i] > '9'))
+            return 1;
+    return codigoErro;
 }
 
 
-int testeVooExiste(char cV[], Data data, int errorCode)
+int testeVooExiste(char cV[], Data data, int codigoErro)
 {
-	return (encontraVoo(cV, data) == -1)? 2:errorCode;
+	return (encontraVoo(cV, data) == -1)? 2:codigoErro;
 }
 
 
-int testeReservasDuplicas(char* cR, Reserva* head, int errorCode)
+int testeReservasDuplicas(char* cR, Reserva* head, int codigoErro)
 {
 	Reserva *curr = head;
-
-	while (curr != NULL) {
+    if (codigoErro == 2)
+        return codigoErro;
+    while (curr != NULL) {
 		if (!strcmp(cR, curr->codigoReserva))
 			return 3;
 		curr = curr->next;
 	}
-	return errorCode;
+	return codigoErro;
 }
 
 
-int testeCapacidadeVoo(Reserva* head, char cV[], Data d, int nP, int errorCode)
+int testeCapacidadeVoo(Reserva* head, char cV[], Data d, int nP, int codigoErro)
 {
 	int numReservas = nP, indice = encontraVoo(cV, d);
 	Reserva *curr = head;
 
-	while (curr != NULL) {
-		if (!strcmp(curr->codigoVoo, cV) && 
-				converteDataNum(d) == 
-				converteDataNum(curr->data))
+    if (indice == -1)
+        return 2;
+    while (curr != NULL) {
+		if (!strcmp(curr->codigoVoo, cV) && d.dia == curr->data.dia && 
+                d.mes == curr->data.mes && d.ano == curr->data.ano)
 			numReservas += curr->numPassageiros;
 		curr = curr->next;
 	}
-	if (indice != -1 && numReservas > _voos[indice].capacidade)
+	if (numReservas > _voos[indice].capacidade)
 		return 4;
-	return errorCode;
+	return codigoErro;
 }
 
 
-int testeData(Data data, int errorCode)
+int testeData(Data data, int codigoErro)
 {
-	return (validaData(data))? errorCode:5;
+	return (validaData(data))? codigoErro:5;
 }
 
 
-int testeNumPassageiros(int numPassageiros, int errorCode)
+int testeNumPassageiros(int numPassageiros, int codigoErro)
 {
-	return (numPassageiros > 0)? errorCode:6;
+	return (numPassageiros > 0)? codigoErro:6;
 }
 
 
 int testesErrosReservaAdicionar(Reserva* head, 
 		char cV[], char* cR, Data data, int nP)
 {
-	int errorCode = 0;
-	errorCode = testeNumPassageiros(nP, errorCode);
-	errorCode = testeData(data, errorCode);
-	errorCode = testeCapacidadeVoo(head, cV, data, nP, errorCode);
-	errorCode = testeReservasDuplicas(cR, head, errorCode);
-	errorCode = testeVooExiste(cV, data, errorCode);
-	errorCode = testaCodigoReserva(cR, errorCode);
-	return errorCode;
+	int codigoErro = 0;
+	codigoErro = testeNumPassageiros(nP, codigoErro);
+	codigoErro = testeData(data, codigoErro);
+	codigoErro = testeCapacidadeVoo(head, cV, data, nP, codigoErro);
+	codigoErro = testeReservasDuplicas(cR, head, codigoErro);
+    if (codigoErro != 2)
+	    codigoErro = testeVooExiste(cV, data, codigoErro);
+	codigoErro = testaCodigoReserva(cR, codigoErro);
+	return codigoErro;
 }
 
 
 int testesErrosReservasListar(char cV[], Data data)
 {
-	int errorCode = 0;
-	errorCode = testeData(data, errorCode);
-	errorCode = testeVooExiste(cV, data, errorCode);
-	return errorCode;
+	int codigoErro = 0;
+	codigoErro = testeData(data, codigoErro);
+	codigoErro = testeVooExiste(cV, data, codigoErro);
+	return codigoErro;
 }
 
 
-void trataErros(int errorCode, char cV[], char* cR)
+void trataErros(int codigoErro, char cV[], char* cR)
 {
-	switch (errorCode)
+	switch (codigoErro)
 	{
 		case 1:
 			printf(ERR_COD_RES);
@@ -180,9 +181,6 @@ void trataErros(int errorCode, char cV[], char* cR)
 	}
 }
 
-
-
-
 void trocaReservas(Reserva* res1, Reserva* res2)
 {
 	int i, nP = res1->numPassageiros;
@@ -196,40 +194,41 @@ void trocaReservas(Reserva* res1, Reserva* res2)
 	}
 
 	res1->data = res2->data;
-	res1->codigoReserva = res2->codigoReserva;
-	res1->numPassageiros = res2->numPassageiros;
-
 	res2->data = data;
+
+	res1->codigoReserva = res2->codigoReserva;
 	res2->codigoReserva = cR;
+
+	res1->numPassageiros = res2->numPassageiros;
 	res2->numPassageiros = nP;
 }
 
 void bubbleSortReservas(Reserva* head)
 {
-	int swapped;
+	int troca;
 	Reserva *curr;
-	Reserva *last = NULL;
+	Reserva *previous = NULL;
 
 	if (head == NULL)
 		return;
 
 	do
 	{
-		swapped = FALSE;
+		troca = FALSE;
 		curr = head;
 
-		while (curr->next != last)
+		while (curr->next != previous)
 		{
 			if (strcmp(curr->codigoReserva, curr->next->codigoReserva) > 0)
-			{ 
+			{
 				trocaReservas(curr, curr->next);
-				swapped = TRUE;
+				troca = TRUE;
 			}
 			curr = curr->next;
 		}
-		last = curr;
+		previous = curr;
 	}
-	while (swapped);
+	while (troca);
 }
 
 void mostraReservas(Reserva* head, char cV[], Data data)

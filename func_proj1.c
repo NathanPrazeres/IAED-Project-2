@@ -220,12 +220,10 @@ void mostraVooChegada(int index) {
 
 
 int encontraVoo(char id[], Data d) {
-	int numData = converteDataNum(d);
 	int i;
-
 	for (i = 0; i < _numVoos; i++)
-		if (!strcmp(id, _voos[i].id)
-		    && numData == converteDataNum(_voos[i].data))
+		if (!strcmp(id, _voos[i].id) && d.dia == _voos[i].data.dia
+				&& d.mes == _voos[i].data.mes && d.ano == _voos[i].data.ano)
 			return i;
 	return NAO_EXISTE;
 }

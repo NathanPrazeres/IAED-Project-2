@@ -194,7 +194,7 @@ Reserva* adicionaListaReservas(Reserva* head)
     }
     else {
 		if ((codigoReserva = (char*) malloc(sizeof(char) * MAX_LINHA)) == NULL) 
-			memoryOverload(head);
+			erroMemoria(head);
 
         scanf("%s %d", codigoReserva, &numPassageiros);
 
@@ -216,16 +216,21 @@ Reserva* adicionaListaReservas(Reserva* head)
 
 Reserva* eliminaReservasVoos(Reserva* head)
 {
-	int i, j, mudaHead = TRUE, flag = TRUE;
+	int len, mudaHead = TRUE, flag = TRUE;
 	char *codigo;
 	Reserva *curr = head, *prev;
 
 	if ((codigo = (char*) malloc(sizeof(char) * MAX_LINHA)) == NULL)
-		memoryOverload(head);
+		erroMemoria(head);
 
 	scanf("%s", codigo);
+	len = strlen(codigo);
 
 	while (curr != NULL) {
+		if (!flag && len >= MAX_CODIGO_VOO) {
+			free(codigo);
+			return head;
+		}
 		if (!strcmp(curr->codigoReserva, codigo) || 
 				!strcmp(curr->codigoVoo, codigo)) {
 
@@ -246,16 +251,8 @@ Reserva* eliminaReservasVoos(Reserva* head)
 			curr = curr->next;
 		}
 	}
-
-	for (i = 0; i < _numVoos; i++) {
-		if (!strcmp(_voos[i].id, codigo)) {
-			flag = FALSE;
-			for (j = i; j < _numVoos - 1; j++)
-				_voos[j] = _voos[j + 1];
-			_numVoos--;
-			i--;
-		}
-	}
+	
+	flag = removeVoos(codigo, flag);
 
 	if (flag)
 		printf(ERR_NOT_FOUND);

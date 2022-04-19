@@ -12,7 +12,7 @@ extern Voo _voos[];
 
 /* Prototipos das Funcoes de Reservas */
 
-void memoryOverload(Reserva* head);
+void erroMemoria(Reserva* head);
 
 Reserva* pop(Reserva* head);
 
