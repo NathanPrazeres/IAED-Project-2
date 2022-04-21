@@ -1,11 +1,17 @@
-/* primeiro projeto de IAED
- * autor: vmm
- */
+/*
+	Nathaniel Prazeres
+	ist1 103145
+	2º Projeto de IAED
+*/
 
 #include "func_proj1.h"
 #include "func_proj2.h"
 
+
+
 /* Variaveis Globais */
+
+
 
 int _numAeroportos = 0;		/* número de aeroportos introduzidos */
 Aeroporto _aeroportos[MAX_NUM_AEROPORTOS];	/* vetor de aeroportos */
@@ -18,7 +24,10 @@ Data _hoje = { 1, 1, 2022 };	/* data atual do sistema */
 const int _diasMesAc[] =	/* dias acumulados por mês (jan=1) */
 	{ 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
 
+
+
 /* Funcoes Aeroportos */
+
 
 
 void adicionaAeroporto() {
@@ -70,6 +79,7 @@ void listaAeroportos() {
 
 
 /* Funcoes Voos */
+
 
 
 void adicionaListaVoos() {
@@ -155,23 +165,24 @@ void alteraData() {
 
 
 
-
-
-
 /* RESERVAS */
 
 
 
 
 
+/* ADICIONA OU LISTA RESERVAS
+	Esta função é chamada quando o utilizador introduz o comando 'r' e serve 
+	para adicionar uma reserva ao sistema. Se apenas for fornecido o código
+	de voo e a data da reserva, a função lista as reservas para esse voo. 
 
-
-
-
-
-
-
-
+	Erros:
+		-> Se o código de voo for inválido;
+		-> Se o voo não existir;
+		-> Se já houver uma reserva com o mesmo código de reserva;
+		-> Se a data for inválida;
+		-> Se o voo não tiver capacidade para o número de pessoas na reserva.
+*/
 Reserva* adicionaListaReservas(Reserva* head)
 {
     int numPassageiros, errorCode;
@@ -213,7 +224,18 @@ Reserva* adicionaListaReservas(Reserva* head)
 }
 
 
+/* ELIMINA RESERVAS OU VOOS
+	Esta função é chamada quando o utilizador introduz o comando 'e' e serve 
+	para eliminar uma reserva ou um voo do sistema. Se apenas for fornecido 
+	o código de voo, a função elimina esse voo e todas as reservas para esse 
+	voo. 
 
+	Erros:
+		-> Se o código de voo for inválido;
+		-> Se o voo não existir;
+		-> Se o código de reserva for inválido;
+		-> Se a reserva não existir.
+*/
 Reserva* eliminaReservasVoos(Reserva* head)
 {
 	int len, mudaHead = TRUE, flag = TRUE;
@@ -227,23 +249,22 @@ Reserva* eliminaReservasVoos(Reserva* head)
 	len = strlen(codigo);
 
 	while (curr != NULL) {
+
 		if (!flag && len >= MAX_CODIGO_VOO) {
 			free(codigo);
 			return head;
 		}
 		if (!strcmp(curr->codigoReserva, codigo) || 
 				!strcmp(curr->codigoVoo, codigo)) {
+			flag = FALSE;
 
 			if (mudaHead) {
-				flag = FALSE;
-				curr = pop(curr);
-				head = curr;
+				head = curr->next;
 			}
 			else {
-				flag = FALSE;
 				prev->next = curr->next;
-				curr = pop(curr);
 			}
+			curr = pop(curr);
 		}
 		else {
 			mudaHead = FALSE;
@@ -251,7 +272,7 @@ Reserva* eliminaReservasVoos(Reserva* head)
 			curr = curr->next;
 		}
 	}
-	
+
 	flag = removeVoos(codigo, flag);
 
 	if (flag)
@@ -267,8 +288,8 @@ Reserva* eliminaReservasVoos(Reserva* head)
 int main() {
 	int c;
 	Reserva *head = NULL;
-
-	while ((c = getchar()) != 'q') {
+	
+	while ((c = getchar()) != 'q' && c != EOF) {
 		switch (c) {
 			case 'a': adicionaAeroporto();
 				break;

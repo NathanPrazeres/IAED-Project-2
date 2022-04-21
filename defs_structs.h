@@ -43,6 +43,13 @@
 #define ERR_DATA "invalid date\n"
 #define ERR_NUM_PASS "invalid passenger number\n"
 
+#define N_ERR_COD_RES 1
+#define N_ERR_COD_VOO 2
+#define N_ERR_COD_RES_DUP 3
+#define N_ERR_NUM_RES 4
+#define N_ERR_DATA 5
+#define N_ERR_NUM_PASS 6
+
 #define OUT_RES "%s %d\n"
 
 /* Estruturas de Dados */

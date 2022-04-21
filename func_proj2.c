@@ -1,15 +1,21 @@
 #include "func_proj1.h"
 #include "func_proj2.h"
 
+
 /* Variaveis Globais */
+
 
 extern int _numVoos;
 extern Voo _voos[];
 
 
-/* Reservas */
+/* Funções Auxiliares */
 
 
+/* ERRO DE MEMÓRIA
+	Esta função termina o programa de forma controlada 
+	no caso de haver falha durante a operação malloc(). 
+*/
 void erroMemoria(Reserva* head)
 {
     printf(ERR_MEM);
@@ -17,6 +23,10 @@ void erroMemoria(Reserva* head)
 	exit(0);
 }
 
+/* POP
+	Esta função remove, liberta e retorna 
+	o elemento fornecido de uma linked list.
+*/
 Reserva* pop(Reserva* head) 
 {
     Reserva *temp = head->next;
@@ -25,7 +35,10 @@ Reserva* pop(Reserva* head)
     return temp;
 }
 
-
+/* DESTROY
+	Esta função destroi a linked list cuja cabeça é fornecida, 
+	libertando toda a memória alocada.
+*/
 void destroy(Reserva* head)
 {
     while(head != NULL) {
@@ -33,7 +46,13 @@ void destroy(Reserva* head)
     }
 }
 
+/* PUSH
+	Esta função insere um elemento no inicio da linked list cuja cabeça é 
+	fornecida, alocando memória para o mesmo.
 
+	Erros:
+		-> ERROMEMORIA
+*/
 Reserva* push(Reserva* head, char cV[], Data data, char* cR, int nP)
 {
 	Reserva *reserva;
@@ -49,7 +68,10 @@ Reserva* push(Reserva* head, char cV[], Data data, char* cR, int nP)
 	return reserva;
 }
 
-
+/* REMOVE VOOS
+	Esta função remove todos os voos cujo código é fornecido,
+	libertando toda a memória alocada.
+*/
 int removeVoos(char* codigo, int flag)
 {
 	int i, j = 0;
@@ -63,124 +85,130 @@ int removeVoos(char* codigo, int flag)
 		}
 	}
 	_numVoos = j;
-	
+
 	return flag;
 }
 
-
+/* VALIDA CODIGO DE RESERVA 
+	Esta função verifica se o código de reserva fornecido é válido.
+*/
 int testaCodigoReserva(char* cR, int codigoErro)
 {
 	int i, len = strlen(cR);
 
 	if (len < 10)
-		return 1;
+		return N_ERR_COD_RES;
     for (i = 0; i < len; i++)
         if (('A' > cR[i] || cR[i] > 'Z') && ('0' > cR[i] || cR[i] > '9'))
-            return 1;
+            return N_ERR_COD_RES;
     return codigoErro;
 }
 
-
-int testeVooExiste(char cV[], Data data, int codigoErro)
-{
-	return (encontraVoo(cV, data) == -1)? 2:codigoErro;
-}
-
-
-int testeReservasDuplicas(char* cR, Reserva* head, int codigoErro)
-{
-	Reserva *curr = head;
-    if (codigoErro == 2)
-        return codigoErro;
-    while (curr != NULL) {
-		if (!strcmp(cR, curr->codigoReserva))
-			return 3;
-		curr = curr->next;
-	}
-	return codigoErro;
-}
-
-
-int testeCapacidadeVoo(Reserva* head, char cV[], Data d, int nP, int codigoErro)
+/* TESTES DE EXISTÊNCIA DE VOO, RESERVA DUPLCIADA E CAPACIDADE DE VOO
+	Esta função verifica se o voo como o código cV existe, se o código de 
+	reserva já foi usado e se o voo tem capacidade para receber mais 
+	passageiros. 
+*/
+int testesCapacidadeDuplicaExiste(Reserva* head, char* cR, 
+		char cV[], Data d, int nP, int codigoErro)
 {
 	int numReservas = nP, indice = encontraVoo(cV, d);
 	Reserva *curr = head;
 
     if (indice == -1)
-        return 2;
+        return N_ERR_COD_VOO;
+
     while (curr != NULL) {
-		if (!strcmp(curr->codigoVoo, cV) && d.dia == curr->data.dia && 
-                d.mes == curr->data.mes && d.ano == curr->data.ano)
+		if (!strcmp(cR, curr->codigoReserva))
+			return N_ERR_COD_RES_DUP;
+
+		if (!strcmp(curr->codigoVoo, cV) && 
+				converteDataNum(curr->data) == converteDataNum(d))
 			numReservas += curr->numPassageiros;
 		curr = curr->next;
 	}
 	if (numReservas > _voos[indice].capacidade)
-		return 4;
+		return N_ERR_NUM_RES;
 	return codigoErro;
 }
 
-
+/* TESTE DA DATA
+	Esta função verifica se a data fornecida é válida.
+*/
 int testeData(Data data, int codigoErro)
 {
-	return (validaData(data))? codigoErro:5;
+	return (validaData(data))? codigoErro:N_ERR_DATA;
 }
 
-
+/* TESTE DO NUMERO DE PASSAGEIROS
+	Esta função verifica se o número de passageiros fornecido é válido.
+*/
 int testeNumPassageiros(int numPassageiros, int codigoErro)
 {
-	return (numPassageiros > 0)? codigoErro:6;
+	return (numPassageiros > 0)? codigoErro:N_ERR_NUM_PASS;
 }
 
-
+/* TESTES DOS ERROS DE ADIÇÃO DE RESERVAS
+	Esta função verifica se uma reserva é válida e se pode ser adicionada
+	ao programa chamando as funções testeData, testeNumPassageiros, 
+	testesCapacidadeDuplicaExiste e testaCodigoReserva.
+*/
 int testesErrosReservaAdicionar(Reserva* head, 
 		char cV[], char* cR, Data data, int nP)
 {
 	int codigoErro = 0;
 	codigoErro = testeNumPassageiros(nP, codigoErro);
 	codigoErro = testeData(data, codigoErro);
-	codigoErro = testeCapacidadeVoo(head, cV, data, nP, codigoErro);
-	codigoErro = testeReservasDuplicas(cR, head, codigoErro);
-    if (codigoErro != 2)
-	    codigoErro = testeVooExiste(cV, data, codigoErro);
+	codigoErro = testesCapacidadeDuplicaExiste(head, cR, 
+			cV, data, nP, codigoErro);
 	codigoErro = testaCodigoReserva(cR, codigoErro);
 	return codigoErro;
 }
 
-
+/* TESTES DOS ERROS DE LISTAGEM DE RESERVAS
+	Esta função verifica se a data e o código de voo fornecidos são válidos.
+*/
 int testesErrosReservasListar(char cV[], Data data)
 {
 	int codigoErro = 0;
 	codigoErro = testeData(data, codigoErro);
-	codigoErro = testeVooExiste(cV, data, codigoErro);
+	codigoErro = testesCapacidadeDuplicaExiste(
+			NULL, NULL, cV, data, 0, codigoErro);
 	return codigoErro;
 }
 
-
+/* TRATA ERROS
+	Esta função verifica se algum dos erros das funções anteriores foi 
+	detetado e se sim para imprimir o erro correspondente.
+*/
 void trataErros(int codigoErro, char cV[], char* cR)
 {
 	switch (codigoErro)
 	{
-		case 1:
+		case N_ERR_COD_RES:
 			printf(ERR_COD_RES);
 			break;
-		case 2:
+		case N_ERR_COD_VOO:
 			printf(ERR_COD_VOO, cV);
 			break;
-		case 3:
+		case N_ERR_COD_RES_DUP:
 			printf(ERR_COD_RES_DUP, cR);
 			break;
-		case 4:
+		case N_ERR_NUM_RES:
 			printf(ERR_NUM_RES);
 			break;
-		case 5:
+		case N_ERR_DATA:
 			printf(ERR_DATA);
 			break;
-		case 6:
+		case N_ERR_NUM_PASS:
 			printf(ERR_NUM_PASS);
 			break;
 	}
 }
 
+/* TROCA RESERVAS
+	Esta função troca o conteúdo de duas reservas.
+*/
 void trocaReservas(Reserva* res1, Reserva* res2)
 {
 	int i, nP = res1->numPassageiros;
@@ -203,21 +231,23 @@ void trocaReservas(Reserva* res1, Reserva* res2)
 	res2->numPassageiros = nP;
 }
 
+/* ORDENA RESERVAS
+	Esta função ordena as reservas de um voo de acordo com o código de reserva 
+	recorrendo a um algoritmo de bubble sort sobre linked lists.
+*/
 void bubbleSortReservas(Reserva* head)
 {
-	int troca;
-	Reserva *curr;
-	Reserva *previous = NULL;
+	int troca = TRUE;
+	Reserva *curr, *prev = NULL;
 
 	if (head == NULL)
 		return;
 
-	do
-	{
+	while (troca) {
 		troca = FALSE;
 		curr = head;
 
-		while (curr->next != previous)
+		while (curr->next != prev)
 		{
 			if (strcmp(curr->codigoReserva, curr->next->codigoReserva) > 0)
 			{
@@ -226,19 +256,19 @@ void bubbleSortReservas(Reserva* head)
 			}
 			curr = curr->next;
 		}
-		previous = curr;
+		prev = curr;
 	}
-	while (troca);
 }
 
+/* MOSTRA RESERVAS
+	Esta função mostra as reservas que têm o código de voo e a data fornecidos.
+*/
 void mostraReservas(Reserva* head, char cV[], Data data)
 {
 	Reserva *curr;
 	for (curr = head; curr != NULL; curr = curr->next) {
 		if (!strcmp(curr->codigoVoo, cV) && 
-				converteDataNum(data) == 
-				converteDataNum(curr->data))
-			printf(OUT_RES, curr->codigoReserva, 
-					curr->numPassageiros);
+				converteDataNum(curr->data) == converteDataNum(data))
+			printf(OUT_RES, curr->codigoReserva, curr->numPassageiros);
 	}
 }
